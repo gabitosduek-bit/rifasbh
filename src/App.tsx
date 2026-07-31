@@ -1119,7 +1119,7 @@ const AdminLayout = ({ children, navigate }) => {
        {/* Content */}
        <div className="flex-1 ml-64 p-8">
           <div className="max-w-6xl mx-auto">
-             {React.Children.map(children, child => React.cloneElement(child, { activeTab }))}
+          {children({ activeTab })}
           </div>
        </div>
     </div>
