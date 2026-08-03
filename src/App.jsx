@@ -19,6 +19,14 @@ const firebaseConfig = {
   messagingSenderId: "891021662021",
   appId: "1:891021662021:web:90e77331cef20e96ea502c",
   measurementId: "G-HNX7VNVD62"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const appId = 'default-rifas-app';
+
 const getColPath = (colName) => `artifacts/${appId}/public/data/${colName}`;
 
 // Default Configuration (Dark Theme)
