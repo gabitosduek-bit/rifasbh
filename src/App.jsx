@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Ticket, Clock, ShieldCheck, Search, Plus, 
-  Settings, CheckCircle, XCircle, CreditCard, ChevronLeft, 
-  ChevronRight, Upload, X, LogIn, Users, BarChart3, AlertCircle, Trophy
+  Settings, CheckCircle, CreditCard, ChevronLeft, 
+  ChevronRight, Upload, X, LogIn, Users, BarChart3, 
+  AlertCircle, Trophy, Menu 
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, addDoc, deleteDoc, query, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // --- FIREBASE SETUP ---
@@ -29,7 +30,7 @@ const appId = 'default-rifas-app';
 
 const getColPath = (colName) => `artifacts/${appId}/public/data/${colName}`;
 
-// Default Configuration (Dark Theme)
+// Default Configuration
 const DEFAULT_CONFIG = {
   businessName: 'LUXTIME RIFAS',
   logoText: 'LR',
@@ -97,7 +98,7 @@ const useAppData = () => {
   return { user, isAdmin, config, raffles, purchases, loading };
 };
 
-// --- DARK THEME UI COMPONENTS ---
+// --- UI COMPONENTS ---
 const Card = ({ children, className = '' }) => (
   <div className={`bg-[#151515] border border-gray-800 shadow-2xl rounded-2xl overflow-hidden ${className}`}>
     {children}
@@ -125,16 +126,16 @@ const Button = ({ children, onClick, variant = 'primary', className = '', disabl
 
 const Input = ({ label, type = 'text', value, onChange, placeholder, required, multiline = false, className = '' }) => (
   <div className={`flex flex-col gap-1 ${className}`}>
-    {label && <label className="text-sm font-medium text-gray-400 ml-1">{label}</label>}
+    {label && <label className="text-xs sm:text-sm font-medium text-gray-400 ml-1">{label}</label>}
     {multiline ? (
       <textarea 
         value={value} onChange={onChange} placeholder={placeholder} required={required}
-        className="bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#f59e0b] focus:border-[#f59e0b] transition-all min-h-[100px] resize-y text-white placeholder-gray-600"
+        className="bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#f59e0b] focus:border-[#f59e0b] transition-all min-h-[100px] resize-y text-white placeholder-gray-600 w-full"
       />
     ) : (
       <input 
         type={type} value={value} onChange={onChange} placeholder={placeholder} required={required}
-        className="bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#f59e0b] focus:border-[#f59e0b] transition-all text-white placeholder-gray-600"
+        className="bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#f59e0b] focus:border-[#f59e0b] transition-all text-white placeholder-gray-600 w-full"
       />
     )}
   </div>
@@ -144,15 +145,17 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-lg z-10">
-          <Card className="p-6 max-h-[90vh] overflow-y-auto border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold tracking-tight text-white">{title}</h2>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-lg z-10 max-h-full flex flex-col">
+          <Card className="flex flex-col max-h-[90vh] border-gray-700">
+            <div className="flex justify-between items-center p-6 border-b border-gray-800 shrink-0">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{title}</h2>
               <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-800 transition-colors"><X size={20} className="text-gray-400" /></button>
             </div>
-            {children}
+            <div className="p-6 overflow-y-auto">
+              {children}
+            </div>
           </Card>
         </motion.div>
       </div>
@@ -175,7 +178,7 @@ const Carousel = ({ images }) => {
   if (!images || images.length === 0) return <div className="w-full h-64 bg-gray-800 rounded-2xl animate-pulse" />;
 
   return (
-    <div className="relative w-full h-[300px] md:h-[450px] rounded-2xl overflow-hidden group border border-gray-800 shadow-xl">
+    <div className="relative w-full h-[250px] sm:h-[300px] md:h-[450px] rounded-2xl overflow-hidden group border border-gray-800 shadow-xl">
       <AnimatePresence initial={false} mode="wait">
         <motion.img
           key={current}
@@ -195,8 +198,6 @@ const Carousel = ({ images }) => {
               <button key={i} onClick={() => setCurrent(i)} className={`w-2 h-2 rounded-full transition-all ${i === current ? 'bg-[#f59e0b] w-4' : 'bg-white/50'}`} />
             ))}
           </div>
-          <button onClick={() => setCurrent(c => (c - 1 + images.length) % images.length)} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"><ChevronLeft size={24} /></button>
-          <button onClick={() => setCurrent(c => (c + 1) % images.length)} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"><ChevronRight size={24} /></button>
         </>
       )}
     </div>
@@ -231,13 +232,13 @@ const CountdownTimer = ({ endDate, onEnd }) => {
   if (timeLeft.ended) return <div className="text-red-500 font-semibold flex items-center gap-2"><AlertCircle size={18}/> Rifa Finalizada</div>;
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-2 sm:gap-4">
       {Object.entries({ Días: timeLeft.d, Horas: timeLeft.h, Min: timeLeft.m, Seg: timeLeft.s }).map(([label, val]) => (
         <div key={label} className="flex flex-col items-center">
-          <div className="bg-[#1a1a1a] border border-gray-800 shadow-inner rounded-xl w-14 h-14 flex items-center justify-center text-xl font-bold text-white">
+          <div className="bg-[#1a1a1a] border border-gray-800 shadow-inner rounded-xl w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-lg sm:text-xl font-bold text-white">
             {padNumber(val)}
           </div>
-          <span className="text-[10px] text-[#f59e0b] uppercase tracking-widest mt-2 font-semibold">{label}</span>
+          <span className="text-[9px] sm:text-[10px] text-[#f59e0b] uppercase tracking-widest mt-2 font-semibold">{label}</span>
         </div>
       ))}
     </div>
@@ -247,40 +248,71 @@ const CountdownTimer = ({ endDate, onEnd }) => {
 // --- PUBLIC VIEWS ---
 
 const Header = ({ config, navigate, currentRoute, isAdmin }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const navItems = [
     { id: 'home', label: 'RIFA ACTUAL' },
     { id: 'past', label: 'HISTORIAL' },
     { id: 'mytickets', label: 'MIS BOLETOS' },
   ];
 
+  const handleNav = (id) => {
+    navigate(id);
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <nav className="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-gray-900 transition-all">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('home')}>
-          <Trophy className="text-[#f59e0b]" size={32} strokeWidth={2} />
-          <span className="font-bold text-2xl tracking-widest text-white hidden sm:block">
+    <nav className="sticky top-0 z-40 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-gray-900 transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNav('home')}>
+          <Trophy className="text-[#f59e0b] w-8 h-8 sm:w-10 sm:h-10" strokeWidth={2} />
+          <span className="font-bold text-lg sm:text-2xl tracking-widest text-white">
             {config.businessName.split(' ')[0]} <span className="text-[#f59e0b] font-normal">{config.businessName.split(' ')[1] || 'RIFAS'}</span>
           </span>
         </div>
         
+        {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
           {navItems.map(item => (
-            <button key={item.id} onClick={() => navigate(item.id)} className={`text-xs font-bold tracking-widest transition-colors ${currentRoute === item.id ? 'text-[#f59e0b]' : 'text-gray-400 hover:text-white'}`}>
+            <button key={item.id} onClick={() => handleNav(item.id)} className={`text-xs font-bold tracking-widest transition-colors ${currentRoute === item.id ? 'text-[#f59e0b]' : 'text-gray-400 hover:text-white'}`}>
               {item.label}
             </button>
           ))}
+          {isAdmin ? (
+            <Button variant="secondary" className="!py-2 !px-4 text-xs tracking-widest" onClick={() => handleNav('admin')}>Panel</Button>
+          ) : (
+            <button onClick={() => handleNav('adminLogin')} className="text-gray-600 hover:text-gray-300 transition-colors text-xs tracking-widest font-bold">Admin</button>
+          )}
         </div>
 
-        <div className="flex gap-4 items-center">
-           {isAdmin ? (
-             <Button variant="secondary" className="!py-2 !px-4 text-xs tracking-widest" onClick={() => navigate('admin')}>Panel</Button>
-           ) : (
-             <button onClick={() => navigate('adminLogin')} className="text-gray-600 hover:text-gray-300 transition-colors text-xs tracking-widest font-bold flex items-center gap-1">
-               Admin Login
-             </button>
-           )}
-        </div>
+        {/* Mobile Menu Button */}
+        <button className="md:hidden text-white p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }} 
+            animate={{ height: 'auto', opacity: 1 }} 
+            exit={{ height: 0, opacity: 0 }} 
+            className="md:hidden border-t border-gray-900 bg-[#0a0a0a] overflow-hidden"
+          >
+            <div className="flex flex-col px-6 py-4 space-y-4">
+              {navItems.map(item => (
+                <button key={item.id} onClick={() => handleNav(item.id)} className={`text-left text-sm font-bold tracking-widest py-2 border-b border-gray-900 ${currentRoute === item.id ? 'text-[#f59e0b]' : 'text-gray-400'}`}>
+                  {item.label}
+                </button>
+              ))}
+              <button onClick={() => handleNav(isAdmin ? 'admin' : 'adminLogin')} className="text-left text-sm font-bold tracking-widest py-2 text-gray-500">
+                {isAdmin ? 'IR AL PANEL ADMIN' : 'ADMIN LOGIN'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
@@ -290,72 +322,72 @@ const HomeView = ({ raffles, navigate, config }) => {
   const mainRaffle = activeRaffles[0];
 
   return (
-    <div className="space-y-16 py-12">
+    <div className="space-y-12 sm:space-y-16 py-8 sm:py-12">
       {mainRaffle ? (
-        <section className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#f59e0b]/10 border border-[#f59e0b]/30 text-[#f59e0b] rounded-full text-xs font-bold tracking-widest uppercase">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="space-y-6 sm:space-y-8 order-2 md:order-1">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#f59e0b]/10 border border-[#f59e0b]/30 text-[#f59e0b] rounded-full text-[10px] sm:text-xs font-bold tracking-widest uppercase">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f59e0b] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#f59e0b]"></span>
               </span>
               Rifa Principal Activa
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
               {mainRaffle.title}
             </h1>
-            <p className="text-lg text-gray-400 leading-relaxed max-w-lg font-light">
+            <p className="text-base sm:text-lg text-gray-400 leading-relaxed max-w-lg font-light">
               {mainRaffle.description}
             </p>
             
             <div>
-               <p className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest">Termina en</p>
+               <p className="text-xs font-bold text-gray-500 mb-3 sm:mb-4 uppercase tracking-widest">Termina en</p>
                <CountdownTimer endDate={mainRaffle.endDate} />
             </div>
 
-            <div className="p-5 bg-[#1a1a1a] border border-gray-800 rounded-2xl flex items-start gap-4 max-w-md shadow-lg">
-               <div className="p-2 bg-yellow-900/30 rounded-lg text-yellow-500"><AlertCircle size={24}/></div>
+            <div className="p-4 sm:p-5 bg-[#1a1a1a] border border-gray-800 rounded-2xl flex items-start gap-4 max-w-md shadow-lg">
+               <div className="p-2 bg-yellow-900/30 rounded-lg text-yellow-500 shrink-0"><AlertCircle size={24}/></div>
                <div>
-                  <h4 className="font-bold text-white tracking-wide">Promoción Especial</h4>
-                  <p className="text-sm text-gray-400 mt-1">{config.promoText}</p>
+                  <h4 className="font-bold text-white tracking-wide text-sm sm:text-base">Promoción Especial</h4>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1">{config.promoText}</p>
                </div>
             </div>
 
-            <div className="flex items-center gap-6 pt-4">
-              <Button onClick={() => navigate('raffle', { id: mainRaffle.id })} className="text-base px-8 py-4 w-full md:w-auto">
+            <div className="pt-2 sm:pt-4">
+              <Button onClick={() => navigate('raffle', { id: mainRaffle.id })} className="text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 w-full md:w-auto">
                 Participar — {formatCurrency(mainRaffle.price)}
               </Button>
             </div>
           </div>
-          <div className="relative">
+          <div className="relative order-1 md:order-2">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#f59e0b]/20 to-transparent rounded-full blur-3xl -z-10 transform scale-90 translate-y-10" />
             <Carousel images={mainRaffle.images} />
           </div>
         </section>
       ) : (
-        <div className="max-w-7xl mx-auto px-6 text-center py-32">
-          <Trophy className="mx-auto text-gray-700 mb-6" size={64} />
-          <h2 className="text-3xl font-bold text-white tracking-widest uppercase">No hay rifas activas</h2>
-          <p className="text-gray-500 mt-2">Mantente atento a nuestras próximas dinámicas.</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center py-24 sm:py-32">
+          <Trophy className="mx-auto text-gray-700 mb-6 w-16 h-16 sm:w-20 sm:h-20" />
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-widest uppercase">No hay rifas activas</h2>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">Mantente atento a nuestras próximas dinámicas.</p>
         </div>
       )}
 
       {activeRaffles.length > 1 && (
-        <section className="max-w-7xl mx-auto px-6 pb-20">
-          <h3 className="text-2xl font-bold mb-8 tracking-widest uppercase text-white">Otras dinámicas</h3>
-          <div className="grid md:grid-cols-3 gap-8">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 sm:pb-20">
+          <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 tracking-widest uppercase text-white">Otras dinámicas</h3>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {activeRaffles.slice(1).map(raffle => (
               <Card key={raffle.id} className="cursor-pointer group hover:border-[#f59e0b]/50 transition-colors" >
                 <div onClick={() => navigate('raffle', { id: raffle.id })}>
-                  <div className="h-48 overflow-hidden">
+                  <div className="h-40 sm:h-48 overflow-hidden">
                     <img src={raffle.images?.[0]} alt={raffle.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   </div>
-                  <div className="p-6">
-                    <h4 className="text-xl font-bold mb-2 text-white">{raffle.title}</h4>
-                    <p className="text-gray-400 text-sm line-clamp-2 mb-4 font-light">{raffle.description}</p>
+                  <div className="p-5 sm:p-6">
+                    <h4 className="text-lg sm:text-xl font-bold mb-2 text-white line-clamp-1">{raffle.title}</h4>
+                    <p className="text-gray-400 text-xs sm:text-sm line-clamp-2 mb-4 font-light">{raffle.description}</p>
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-[#f59e0b] text-lg">{formatCurrency(raffle.price)}</span>
-                      <Button variant="outline" className="!py-1.5 !px-4 text-xs">Ver Detalles</Button>
+                      <span className="font-bold text-[#f59e0b] text-base sm:text-lg">{formatCurrency(raffle.price)}</span>
+                      <Button variant="outline" className="!py-1.5 !px-3 sm:!px-4 text-[10px] sm:text-xs">Ver Detalles</Button>
                     </div>
                   </div>
                 </div>
@@ -372,13 +404,12 @@ const TicketGrid = ({ ticketsStatus, selectedTickets, toggleTicket }) => {
   const grid = Array.from({ length: 100 }, (_, i) => padNumber(i));
 
   return (
-    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 md:gap-3">
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2 md:gap-3">
       {grid.map(num => {
         const status = ticketsStatus[num] || 'AVAILABLE';
         const isSelected = selectedTickets.includes(num);
         
-        // Dark Theme Colors for Tickets
-        let styleClass = "bg-[#1a1a1a] text-gray-300 border-gray-700 hover:border-[#f59e0b] hover:text-white"; // AVAILABLE
+        let styleClass = "bg-[#1a1a1a] text-gray-300 border-gray-700 hover:border-[#f59e0b] hover:text-white"; 
         
         if (status === 'PENDING') styleClass = "bg-orange-950/40 text-orange-600 border-orange-900/50 cursor-not-allowed opacity-70";
         if (status === 'APPROVED') styleClass = "bg-red-950/40 text-red-600 border-red-900/50 cursor-not-allowed opacity-70";
@@ -389,7 +420,7 @@ const TicketGrid = ({ ticketsStatus, selectedTickets, toggleTicket }) => {
             key={num}
             disabled={status !== 'AVAILABLE'}
             onClick={() => toggleTicket(num)}
-            className={`w-full aspect-square rounded-xl flex items-center justify-center font-bold text-lg md:text-xl border transition-all duration-200 ${styleClass}`}
+            className={`w-full aspect-square rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl border transition-all duration-200 ${styleClass}`}
           >
             {num}
           </button>
@@ -460,7 +491,7 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
           proofUrl = await getDownloadURL(storageRef);
         } catch (uploadError) {
           console.warn("Storage upload failed, fallback", uploadError);
-          proofUrl = "" ;
+          proofUrl = ''; // FIX APLICADO AQUÍ
         }
       }
 
@@ -476,7 +507,6 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
       };
 
       await addDoc(collection(db, getColPath('purchases')), purchaseData);
-      console.log(`[EMAIL] To Admin: New purchase from ${formData.name}`);
       setIsSubmitting(false);
       navigate('success');
     } catch (error) {
@@ -486,52 +516,52 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 pb-32">
-      <div className="flex flex-col md:flex-row gap-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-32">
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
         {/* Left: Info */}
-        <div className="md:w-1/3 space-y-6">
-          <Button variant="secondary" onClick={() => navigate('home')} className="!p-2 !w-12 !h-12 rounded-full mb-4 border-none">
+        <div className="lg:w-1/3 space-y-6">
+          <Button variant="secondary" onClick={() => navigate('home')} className="!p-2 !w-10 !h-10 sm:!w-12 sm:!h-12 rounded-full mb-2 sm:mb-4 border-none">
             <ChevronLeft />
           </Button>
           <Carousel images={raffle.images} />
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight mb-3 text-white">{raffle.title}</h1>
-            <p className="text-gray-400 mb-6 font-light">{raffle.description}</p>
-            <div className="flex items-center gap-3 bg-[#151515] p-5 rounded-2xl border border-gray-800">
-               <Clock className="text-gray-500" />
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 sm:mb-3 text-white">{raffle.title}</h1>
+            <p className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6 font-light">{raffle.description}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-[#151515] p-4 sm:p-5 rounded-2xl border border-gray-800">
+               <Clock className="text-gray-500 hidden sm:block" />
                <CountdownTimer endDate={raffle.endDate} />
             </div>
           </div>
           
-          <Card className="p-6 bg-gradient-to-br from-[#1a1a1a] to-[#222] border-[#f59e0b]/20 relative overflow-hidden">
+          <Card className="p-5 sm:p-6 bg-gradient-to-br from-[#1a1a1a] to-[#222] border-[#f59e0b]/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10 text-[#f59e0b]"><Trophy size={64}/></div>
-            <h3 className="font-bold text-[#f59e0b] mb-2 flex items-center gap-2">
+            <h3 className="font-bold text-[#f59e0b] mb-2 flex items-center gap-2 text-sm sm:text-base">
               <CheckCircle size={18}/> PROMOCIÓN
             </h3>
-            <p className="text-sm text-gray-300 font-light">{config.promoText}</p>
+            <p className="text-xs sm:text-sm text-gray-300 font-light">{config.promoText}</p>
             {selectedTickets.length >= 10 && selectedTickets.length % 11 === 10 && (
-               <Button onClick={applyPromo} className="w-full mt-5 !py-3 text-xs shadow-[#f59e0b]/20 animate-pulse">
+               <Button onClick={applyPromo} className="w-full mt-4 sm:mt-5 !py-2.5 sm:!py-3 text-xs shadow-[#f59e0b]/20 animate-pulse">
                  ¡Reclamar Boleto Gratis!
                </Button>
             )}
           </Card>
 
-          <Card className="p-6 border-gray-800">
+          <Card className="p-5 sm:p-6 border-gray-800 sticky top-24">
              <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-400 text-sm uppercase tracking-widest font-bold">Boletos:</span>
-                <span className="font-bold text-2xl text-white">{selectedTickets.length}</span>
+                <span className="text-gray-400 text-xs sm:text-sm uppercase tracking-widest font-bold">Boletos:</span>
+                <span className="font-bold text-xl sm:text-2xl text-white">{selectedTickets.length}</span>
              </div>
-             <div className="flex flex-wrap gap-2 mb-6">
-                {selectedTickets.map(t => <span key={t} className="bg-[#f59e0b] text-black px-2.5 py-1 rounded text-sm font-bold shadow-sm">{t}</span>)}
+             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-6 max-h-32 overflow-y-auto pr-2">
+                {selectedTickets.map(t => <span key={t} className="bg-[#f59e0b] text-black px-2 sm:px-2.5 py-1 rounded text-xs sm:text-sm font-bold shadow-sm">{t}</span>)}
              </div>
-             <div className="pt-5 border-t border-gray-800 flex justify-between items-center mb-8">
-                <span className="text-gray-400 text-sm uppercase tracking-widest font-bold">Total:</span>
-                <span className="font-extrabold text-3xl text-[#f59e0b]">{formatCurrency(total)}</span>
+             <div className="pt-4 sm:pt-5 border-t border-gray-800 flex justify-between items-center mb-6 sm:mb-8">
+                <span className="text-gray-400 text-xs sm:text-sm uppercase tracking-widest font-bold">Total:</span>
+                <span className="font-extrabold text-2xl sm:text-3xl text-[#f59e0b]">{formatCurrency(total)}</span>
              </div>
              <Button 
                onClick={() => setShowPurchaseForm(true)} 
                disabled={selectedTickets.length === 0} 
-               className="w-full py-4 text-base"
+               className="w-full py-3 sm:py-4 text-sm sm:text-base"
              >
                Confirmar Selección
              </Button>
@@ -539,19 +569,19 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
         </div>
 
         {/* Right: Grid */}
-        <div className="md:w-2/3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+        <div className="lg:w-2/3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 sm:mb-6 gap-3 sm:gap-4">
              <div>
-               <h2 className="text-2xl font-bold tracking-widest uppercase text-white">Selecciona tus números</h2>
-               <p className="text-gray-400 mt-1 font-light">Haz clic en los números disponibles para participar.</p>
+               <h2 className="text-xl sm:text-2xl font-bold tracking-widest uppercase text-white">Selecciona tus números</h2>
+               <p className="text-xs sm:text-sm text-gray-400 mt-1 font-light">Haz clic en los números disponibles para participar.</p>
              </div>
-             <div className="flex gap-4 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-gray-600"></span> Libre</div>
-                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-600"></span> Espera</div>
-                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600"></span> Pagado</div>
+             <div className="flex gap-3 sm:gap-4 text-[10px] sm:text-xs font-bold tracking-wider text-gray-500 uppercase">
+                <div className="flex items-center gap-1 sm:gap-1.5"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gray-600"></span> Libre</div>
+                <div className="flex items-center gap-1 sm:gap-1.5"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-orange-600"></span> Espera</div>
+                <div className="flex items-center gap-1 sm:gap-1.5"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-600"></span> Pagado</div>
              </div>
           </div>
-          <Card className="p-6 md:p-8 bg-[#111] border-gray-800">
+          <Card className="p-3 sm:p-6 md:p-8 bg-[#111] border-gray-800">
             <TicketGrid ticketsStatus={ticketsStatus} selectedTickets={selectedTickets} toggleTicket={toggleTicket} />
           </Card>
         </div>
@@ -559,41 +589,41 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
 
       {/* Purchase Modal */}
       <Modal isOpen={showPurchaseForm} onClose={() => setShowPurchaseForm(false)} title="Finalizar Compra">
-        <form onSubmit={handlePurchase} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handlePurchase} className="space-y-5 sm:space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             <Input label="NOMBRE COMPLETO" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ej. Juan Pérez" />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Input label="CORREO" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="juan@email.com" />
               <Input label="WHATSAPP" type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="55 1234 5678" />
             </div>
           </div>
 
-          <div className="p-5 bg-[#1a1a1a] rounded-xl border border-[#f59e0b]/30 space-y-3">
-            <h4 className="font-bold text-[#f59e0b] flex items-center gap-2 tracking-widest uppercase text-sm"><CreditCard size={18}/> Datos de Pago</h4>
-            <pre className="text-sm text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
+          <div className="p-4 sm:p-5 bg-[#1a1a1a] rounded-xl border border-[#f59e0b]/30 space-y-2 sm:space-y-3">
+            <h4 className="font-bold text-[#f59e0b] flex items-center gap-2 tracking-widest uppercase text-xs sm:text-sm"><CreditCard size={18}/> Datos de Pago</h4>
+            <pre className="text-xs sm:text-sm text-gray-300 whitespace-pre-wrap font-sans leading-relaxed overflow-x-auto">
               {config.bankDetails}
             </pre>
-            <p className="text-xs text-gray-400 mt-3 font-medium uppercase tracking-widest pt-3 border-t border-gray-800">Monto a transferir: <span className="text-[#f59e0b] font-bold text-base">{formatCurrency(total)}</span></p>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-2 sm:mt-3 font-medium uppercase tracking-widest pt-2 sm:pt-3 border-t border-gray-800">Monto a transferir: <span className="text-[#f59e0b] font-bold text-sm sm:text-base">{formatCurrency(total)}</span></p>
           </div>
 
           <div className="space-y-2">
-             <label className="text-sm font-bold tracking-widest uppercase text-gray-400 ml-1">Comprobante</label>
-             <div className="border-2 border-dashed border-gray-700 bg-[#151515] rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#f59e0b] hover:bg-[#1a1a1a] transition-all cursor-pointer relative group">
-               <Upload className="text-gray-500 mb-3 group-hover:text-[#f59e0b] transition-colors" size={32} />
-               <span className="text-sm text-gray-400 font-medium group-hover:text-white transition-colors">
-                 {proofFile ? proofFile.name : 'Toca para subir imagen o PDF'}
+             <label className="text-xs sm:text-sm font-bold tracking-widest uppercase text-gray-400 ml-1">Comprobante</label>
+             <div className="border-2 border-dashed border-gray-700 bg-[#151515] rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center text-center hover:border-[#f59e0b] hover:bg-[#1a1a1a] transition-all cursor-pointer relative group">
+               <Upload className="text-gray-500 mb-2 sm:mb-3 group-hover:text-[#f59e0b] transition-colors" size={28} />
+               <span className="text-xs sm:text-sm text-gray-400 font-medium group-hover:text-white transition-colors px-4">
+                 {proofFile ? proofFile.name : 'Toca aquí para subir foto o PDF'}
                </span>
                <input 
                  type="file" 
                  accept="image/*,.pdf" 
                  required 
-                 className="absolute inset-0 opacity-0 cursor-pointer"
+                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                  onChange={e => setProofFile(e.target.files[0])}
                />
              </div>
           </div>
 
-          <Button type="submit" className="w-full py-4" disabled={isSubmitting}>
+          <Button type="submit" className="w-full py-3 sm:py-4 text-sm sm:text-base" disabled={isSubmitting}>
             {isSubmitting ? 'ENVIANDO...' : 'ENVIAR COMPROBANTE'}
           </Button>
         </form>
@@ -603,19 +633,19 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
 };
 
 const SuccessView = ({ config, navigate }) => (
-  <div className="max-w-2xl mx-auto px-6 py-32 text-center space-y-8">
-    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-24 h-24 bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/30 rounded-full flex items-center justify-center mx-auto mb-8">
-      <CheckCircle size={48} />
+  <div className="max-w-2xl mx-auto px-4 sm:px-6 py-24 sm:py-32 text-center space-y-6 sm:space-y-8">
+    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 sm:w-24 sm:h-24 bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/30 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
+      <CheckCircle size={40} className="sm:w-12 sm:h-12" />
     </motion.div>
-    <h1 className="text-4xl font-extrabold tracking-tight text-white uppercase">Comprobante Enviado</h1>
-    <p className="text-lg text-gray-400 leading-relaxed font-light">
+    <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white uppercase">Comprobante Enviado</h1>
+    <p className="text-base sm:text-lg text-gray-400 leading-relaxed font-light">
       {config.successMessage}
     </p>
-    <p className="text-gray-500 text-sm">
+    <p className="text-gray-500 text-xs sm:text-sm px-4">
       Recibirás un correo cuando sea aprobado. Revisa el estado desde "MIS BOLETOS".
     </p>
-    <div className="pt-8">
-      <Button onClick={() => navigate('home')} className="mx-auto">VOLVER AL INICIO</Button>
+    <div className="pt-6 sm:pt-8">
+      <Button onClick={() => navigate('home')} className="mx-auto text-xs sm:text-sm px-6 sm:px-8 py-3">VOLVER AL INICIO</Button>
     </div>
   </div>
 );
@@ -633,45 +663,45 @@ const MyTicketsView = ({ purchases }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-16">
-      <h1 className="text-3xl font-extrabold tracking-widest uppercase text-white mb-10 flex items-center gap-3">
-        <Ticket className="text-[#f59e0b]" size={32}/> Mis Boletos
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-widest uppercase text-white mb-6 sm:mb-10 flex items-center gap-2 sm:gap-3">
+        <Ticket className="text-[#f59e0b] w-6 h-6 sm:w-8 sm:h-8"/> Mis Boletos
       </h1>
-      <Card className="p-2 mb-10 border-gray-700 bg-[#111]">
-        <form onSubmit={handleSearch} className="flex gap-2">
+      <Card className="p-1 sm:p-2 mb-8 sm:mb-10 border-gray-700 bg-[#111]">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
           <input 
-            className="flex-1 bg-transparent border-none text-white px-6 py-4 outline-none placeholder-gray-600" 
+            className="flex-1 bg-transparent border-none text-white px-4 sm:px-6 py-3 sm:py-4 outline-none placeholder-gray-600 text-sm sm:text-base" 
             placeholder="Ingresa tu nombre completo..." 
             value={searchName} 
             onChange={e => setSearchName(e.target.value)} 
           />
-          <Button type="submit" className="!rounded-lg"><Search size={20} /> BUSCAR</Button>
+          <Button type="submit" className="!rounded-lg sm:w-auto w-full py-3"><Search size={18} className="sm:w-5 sm:h-5"/> BUSCAR</Button>
         </form>
       </Card>
 
       <div className="space-y-4">
         {results.length > 0 ? results.map(p => (
-          <Card key={p.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-gray-800">
-             <div>
-                <h3 className="font-bold text-lg text-white mb-1">{p.raffleTitle}</h3>
-                <p className="text-gray-500 text-sm font-light">Fecha: {p.createdAt?.toDate().toLocaleDateString()}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {p.tickets.map(t => <span key={t} className="bg-[#222] text-white px-3 py-1.5 rounded text-sm font-bold border border-gray-700">{t}</span>)}
+          <Card key={p.id} className="p-5 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 border-gray-800">
+             <div className="w-full">
+                <h3 className="font-bold text-base sm:text-lg text-white mb-1">{p.raffleTitle}</h3>
+                <p className="text-gray-500 text-xs sm:text-sm font-light">Fecha: {p.createdAt?.toDate().toLocaleDateString()}</p>
+                <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+                  {p.tickets.map(t => <span key={t} className="bg-[#222] text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-bold border border-gray-700">{t}</span>)}
                 </div>
              </div>
-             <div className="text-right flex flex-col items-start md:items-end w-full md:w-auto border-t border-gray-800 md:border-0 pt-4 md:pt-0">
-                <span className={`px-4 py-1.5 rounded uppercase text-xs font-bold tracking-widest ${
+             <div className="text-left md:text-right flex flex-row md:flex-col justify-between md:justify-start items-center md:items-end w-full md:w-auto border-t border-gray-800 md:border-0 pt-4 md:pt-0">
+                <span className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded uppercase text-[10px] sm:text-xs font-bold tracking-widest ${
                   p.status === 'APPROVED' ? 'bg-green-900/50 text-green-500 border border-green-800' : 
                   p.status === 'REJECTED' ? 'bg-red-900/50 text-red-500 border border-red-800' : 
                   'bg-orange-900/50 text-orange-500 border border-orange-800'
                 }`}>
                   {p.status === 'APPROVED' ? 'VALIDADO' : p.status === 'REJECTED' ? 'RECHAZADO' : 'EN REVISIÓN'}
                 </span>
-                <span className="text-sm font-bold mt-3 text-gray-400">Total: <span className="text-white">{formatCurrency(p.total)}</span></span>
+                <span className="text-xs sm:text-sm font-bold md:mt-3 text-gray-400">Total: <span className="text-white">{formatCurrency(p.total)}</span></span>
              </div>
           </Card>
         )) : searchName && (
-          <div className="text-center py-16 text-gray-500 font-light border border-dashed border-gray-800 rounded-2xl">
+          <div className="text-center py-12 sm:py-16 text-gray-500 font-light border border-dashed border-gray-800 rounded-2xl px-4 text-sm sm:text-base">
             No se encontraron boletos a nombre de "<span className="text-white font-bold">{searchName}</span>".
           </div>
         )}
@@ -684,27 +714,27 @@ const PastRafflesView = ({ raffles }) => {
   const past = raffles.filter(r => r.status === 'finished');
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-16">
-      <h1 className="text-3xl font-extrabold tracking-widest uppercase text-white mb-12 flex items-center gap-3">
-        <Clock className="text-[#f59e0b]" size={32}/> Historial
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-widest uppercase text-white mb-8 sm:mb-12 flex items-center gap-2 sm:gap-3">
+        <Clock className="text-[#f59e0b] w-6 h-6 sm:w-8 sm:h-8"/> Historial
       </h1>
       {past.length === 0 ? (
-        <p className="text-gray-500 text-center py-20 border border-dashed border-gray-800 rounded-2xl">Aún no hay dinámicas finalizadas.</p>
+        <p className="text-gray-500 text-center py-16 sm:py-20 border border-dashed border-gray-800 rounded-2xl text-sm sm:text-base">Aún no hay dinámicas finalizadas.</p>
       ) : (
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
           {past.map(raffle => (
             <Card key={raffle.id} className="group flex flex-col border-gray-800 bg-[#111]">
-              <div className="h-56 overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700">
+              <div className="h-48 sm:h-56 overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700">
                 <img src={raffle.images?.[0]} alt={raffle.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent" />
               </div>
-              <div className="p-6 flex-1 flex flex-col -mt-10 relative z-10">
-                <h4 className="text-xl font-bold mb-2 text-white">{raffle.title}</h4>
-                <p className="text-gray-500 text-sm mb-6 font-light">Finalizó: {new Date(raffle.endDate).toLocaleDateString()}</p>
-                <div className="mt-auto p-5 bg-[#1a1a1a] rounded-xl border border-[#f59e0b]/20">
-                   <p className="text-[10px] text-[#f59e0b] uppercase tracking-widest font-bold mb-1">Ganador Oficial</p>
-                   <p className="font-extrabold text-lg text-white mb-1">{raffle.winnerName || 'Por anunciar'}</p>
-                   <p className="text-sm text-gray-400">Boleto: <span className="font-bold text-white bg-gray-800 px-2 py-0.5 rounded">{raffle.winningNumber || '--'}</span></p>
+              <div className="p-5 sm:p-6 flex-1 flex flex-col -mt-8 sm:-mt-10 relative z-10">
+                <h4 className="text-lg sm:text-xl font-bold mb-2 text-white">{raffle.title}</h4>
+                <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6 font-light">Finalizó: {new Date(raffle.endDate).toLocaleDateString()}</p>
+                <div className="mt-auto p-4 sm:p-5 bg-[#1a1a1a] rounded-xl border border-[#f59e0b]/20">
+                   <p className="text-[9px] sm:text-[10px] text-[#f59e0b] uppercase tracking-widest font-bold mb-1">Ganador Oficial</p>
+                   <p className="font-extrabold text-base sm:text-lg text-white mb-1">{raffle.winnerName || 'Por anunciar'}</p>
+                   <p className="text-xs sm:text-sm text-gray-400">Boleto: <span className="font-bold text-white bg-gray-800 px-2 py-0.5 rounded">{raffle.winningNumber || '--'}</span></p>
                 </div>
               </div>
             </Card>
@@ -732,28 +762,25 @@ const AdminLogin = ({ navigate }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-32">
-      <Card className="p-8 border-gray-800 bg-[#111]">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-[#1a1a1a] border border-gray-700 text-[#f59e0b] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-             <ShieldCheck size={32} />
+    <div className="max-w-md mx-auto px-4 sm:px-6 py-20 sm:py-32">
+      <Card className="p-6 sm:p-8 border-gray-800 bg-[#111]">
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#1a1a1a] border border-gray-700 text-[#f59e0b] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+             <ShieldCheck size={28} className="sm:w-8 sm:h-8" />
           </div>
-          <h2 className="text-2xl font-extrabold tracking-widest text-white uppercase">Acceso Admin</h2>
-          <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest">Área restringida</p>
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-widest text-white uppercase">Acceso Admin</h2>
+          <p className="text-gray-500 text-[10px] sm:text-xs mt-2 uppercase tracking-widest">Área restringida</p>
         </div>
-        <form onSubmit={handleLogin} className="space-y-5">
-          {error && <div className="p-3 bg-red-900/30 border border-red-800 text-red-400 rounded-xl text-sm text-center font-bold">{error}</div>}
+        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+          {error && <div className="p-3 bg-red-900/30 border border-red-800 text-red-400 rounded-xl text-xs sm:text-sm text-center font-bold">{error}</div>}
           <Input label="CORREO" type="email" required value={email} onChange={e=>setEmail(e.target.value)} />
           <Input label="CONTRASEÑA" type="password" required value={password} onChange={e=>setPassword(e.target.value)} />
-          <Button type="submit" className="w-full mt-6 py-4">INGRESAR AL PANEL</Button>
+          <Button type="submit" className="w-full mt-4 sm:mt-6 py-3 sm:py-4 text-sm sm:text-base">INGRESAR AL PANEL</Button>
         </form>
       </Card>
     </div>
   );
 };
-
-// ... AdminDashboard, AdminRaffles, AdminPurchases, AdminConfig remain identical in logic 
-// but updated with dark theme classes for consistency.
 
 const AdminDashboard = ({ raffles, purchases }) => {
   const stats = useMemo(() => {
@@ -772,48 +799,48 @@ const AdminDashboard = ({ raffles, purchases }) => {
   }, [purchases]);
 
   const StatCard = ({ title, value, sub, icon: Icon, colorClass }) => (
-    <Card className="p-6 border-gray-800 bg-[#111]">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-xl ${colorClass}`}><Icon size={24} /></div>
+    <Card className="p-5 sm:p-6 border-gray-800 bg-[#111]">
+      <div className="flex justify-between items-start mb-3 sm:mb-4">
+        <div className={`p-2.5 sm:p-3 rounded-xl ${colorClass}`}><Icon size={20} className="sm:w-6 sm:h-6" /></div>
       </div>
       <div>
-        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">{title}</p>
-        <h3 className="text-3xl font-extrabold text-white">{value}</h3>
-        {sub && <p className="text-xs text-gray-400 mt-2 font-medium">{sub}</p>}
+        <p className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">{title}</p>
+        <h3 className="text-2xl sm:text-3xl font-extrabold text-white">{value}</h3>
+        {sub && <p className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-2 font-medium">{sub}</p>}
       </div>
     </Card>
   );
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold tracking-widest text-white uppercase">Dashboard</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="space-y-6 sm:space-y-8">
+      <h2 className="text-xl sm:text-2xl font-bold tracking-widest text-white uppercase">Dashboard</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard title="Ingresos" value={formatCurrency(stats.totalRevenue)} icon={BarChart3} colorClass="bg-green-900/30 text-green-500" />
         <StatCard title="Por Validar" value={formatCurrency(stats.pendingRevenue)} icon={Clock} colorClass="bg-orange-900/30 text-orange-500" />
         <StatCard title="Boletos" value={stats.totalTicketsSold} sub={`${stats.totalTicketsPending} apartados`} icon={Ticket} colorClass="bg-[#f59e0b]/20 text-[#f59e0b]" />
         <StatCard title="Clientes" value={stats.participants} icon={Users} colorClass="bg-blue-900/30 text-blue-500" />
       </div>
 
-      <Card className="p-8 mt-8 border-gray-800 bg-[#111]">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-6">Estado de Rifas Activas</h3>
+      <Card className="p-5 sm:p-8 mt-6 sm:mt-8 border-gray-800 bg-[#111]">
+        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-gray-400 mb-4 sm:mb-6">Estado de Rifas Activas</h3>
         {raffles.filter(r=>r.status==='active').map(r => {
           const rPurchases = purchases.filter(p => p.raffleId === r.id);
           const sold = rPurchases.filter(p => p.status === 'APPROVED').reduce((a, b) => a + b.tickets.length, 0);
           const pending = rPurchases.filter(p => p.status === 'PENDING').reduce((a, b) => a + b.tickets.length, 0);
           return (
-            <div key={r.id} className="mb-8 last:mb-0">
-              <div className="flex justify-between text-sm mb-3">
-                <span className="font-bold text-white text-lg">{r.title}</span>
-                <span className="text-gray-400 font-bold">{sold}% VENDIDO</span>
+            <div key={r.id} className="mb-6 sm:mb-8 last:mb-0">
+              <div className="flex justify-between text-xs sm:text-sm mb-2 sm:mb-3">
+                <span className="font-bold text-white text-base sm:text-lg line-clamp-1 mr-2">{r.title}</span>
+                <span className="text-gray-400 font-bold shrink-0">{sold}% VENDIDO</span>
               </div>
-              <div className="h-3 bg-[#222] rounded-full overflow-hidden flex border border-gray-800">
+              <div className="h-2.5 sm:h-3 bg-[#222] rounded-full overflow-hidden flex border border-gray-800">
                 <div style={{ width: `${(sold/100)*100}%` }} className="bg-[#f59e0b] h-full transition-all" />
                 <div style={{ width: `${(pending/100)*100}%` }} className="bg-orange-800 h-full transition-all opacity-80" />
               </div>
-              <div className="flex gap-6 mt-3 text-xs text-gray-500 font-bold tracking-widest uppercase">
-                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#f59e0b]"/> Vendidos ({sold})</span>
-                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-800"/> Espera ({pending})</span>
-                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#333]"/> Libres ({100 - sold - pending})</span>
+              <div className="flex flex-wrap gap-3 sm:gap-6 mt-3 text-[10px] sm:text-xs text-gray-500 font-bold tracking-widest uppercase">
+                <span className="flex items-center gap-1.5 sm:gap-2"><div className="w-2 h-2 rounded-full bg-[#f59e0b]"/> Vendidos ({sold})</span>
+                <span className="flex items-center gap-1.5 sm:gap-2"><div className="w-2 h-2 rounded-full bg-orange-800"/> Espera ({pending})</span>
+                <span className="flex items-center gap-1.5 sm:gap-2"><div className="w-2 h-2 rounded-full bg-[#333]"/> Libres ({100 - sold - pending})</span>
               </div>
             </div>
           );
@@ -848,39 +875,39 @@ const AdminRaffles = ({ raffles }) => {
     setShowModal(false);
   };
 
-  const handleDelete = async (id) => { if(confirm('¿Eliminar esta rifa?')) await deleteDoc(doc(db, getColPath('raffles'), id)); };
+  const handleDelete = async (id) => { if(window.confirm('¿Eliminar esta rifa?')) await deleteDoc(doc(db, getColPath('raffles'), id)); };
   const handleDuplicate = async (raffle) => {
     const { id, createdAt, updatedAt, ...rest } = raffle;
     await addDoc(collection(db, getColPath('raffles')), { ...rest, title: `${rest.title} (Copia)`, status: 'active', createdAt: serverTimestamp() });
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold tracking-widest text-white uppercase">Gestión de Rifas</h2>
-        <Button onClick={() => openModal()}><Plus size={20} /> NUEVA</Button>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-widest text-white uppercase">Gestión de Rifas</h2>
+        <Button onClick={() => openModal()} className="w-full sm:w-auto"><Plus size={18} /> NUEVA</Button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {raffles.map(r => (
           <Card key={r.id} className="p-0 flex flex-col sm:flex-row overflow-hidden group border-gray-800 bg-[#111]">
-            <div className="w-full sm:w-40 h-40 bg-[#222] flex-shrink-0 relative">
+            <div className="w-full sm:w-40 h-40 sm:h-auto bg-[#222] flex-shrink-0 relative">
                {r.images?.[0] && <img src={r.images[0]} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />}
             </div>
-            <div className="p-5 flex-1 flex flex-col justify-between">
+            <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                <div>
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-bold text-lg text-white line-clamp-1">{r.title}</h4>
-                    <span className={`text-[9px] uppercase font-bold px-2 py-1 rounded tracking-widest ${r.status === 'active' ? 'bg-green-900/50 text-green-500' : 'bg-gray-800 text-gray-400'}`}>
+                    <h4 className="font-bold text-base sm:text-lg text-white line-clamp-1 mr-2">{r.title}</h4>
+                    <span className={`text-[8px] sm:text-[9px] uppercase font-bold px-2 py-1 rounded tracking-widest shrink-0 ${r.status === 'active' ? 'bg-green-900/50 text-green-500' : 'bg-gray-800 text-gray-400'}`}>
                       {r.status === 'active' ? 'ACTIVA' : 'FIN'}
                     </span>
                   </div>
-                  <p className="text-sm text-[#f59e0b] font-bold">{formatCurrency(r.price)} / BOLETO</p>
+                  <p className="text-xs sm:text-sm text-[#f59e0b] font-bold">{formatCurrency(r.price)} / BOLETO</p>
                </div>
                <div className="flex gap-2 mt-4">
-                  <Button variant="secondary" className="!py-2 !px-3 text-[10px] flex-1" onClick={() => openModal(r)}>EDITAR</Button>
-                  <Button variant="secondary" className="!py-2 !px-3 text-[10px] flex-1" onClick={() => handleDuplicate(r)}>DUPLICAR</Button>
-                  <Button variant="danger" className="!py-2 !px-3 text-xs" onClick={() => handleDelete(r.id)}><X size={16}/></Button>
+                  <Button variant="secondary" className="!py-1.5 sm:!py-2 !px-2 sm:!px-3 text-[9px] sm:text-[10px] flex-1" onClick={() => openModal(r)}>EDITAR</Button>
+                  <Button variant="secondary" className="!py-1.5 sm:!py-2 !px-2 sm:!px-3 text-[9px] sm:text-[10px] flex-1" onClick={() => handleDuplicate(r)}>DUPLICAR</Button>
+                  <Button variant="danger" className="!py-1.5 sm:!py-2 !px-3 text-xs" onClick={() => handleDelete(r.id)}><X size={14}/></Button>
                </div>
             </div>
           </Card>
@@ -891,25 +918,25 @@ const AdminRaffles = ({ raffles }) => {
         <form onSubmit={handleSave} className="space-y-4">
           <Input label="TÍTULO" required value={formData.title} onChange={e=>setFormData({...formData, title: e.target.value})} />
           <Input label="DESCRIPCIÓN" multiline required value={formData.description} onChange={e=>setFormData({...formData, description: e.target.value})} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <Input label="PRECIO (MXN)" type="number" required value={formData.price} onChange={e=>setFormData({...formData, price: e.target.value})} />
              <Input label="FECHA LÍMITE" type="datetime-local" required value={formData.endDate} onChange={e=>setFormData({...formData, endDate: e.target.value})} />
           </div>
           <Input label="URL DE IMÁGENES (UNA POR LÍNEA)" multiline required value={formData.images} onChange={e=>setFormData({...formData, images: e.target.value})} placeholder="https://..." />
           <div className="flex flex-col gap-1">
-             <label className="text-sm font-medium text-gray-400 ml-1 uppercase tracking-widest">ESTADO</label>
-             <select className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl px-4 py-3 outline-none focus:border-[#f59e0b]" value={formData.status} onChange={e=>setFormData({...formData, status: e.target.value})}>
+             <label className="text-xs sm:text-sm font-medium text-gray-400 ml-1 uppercase tracking-widest">ESTADO</label>
+             <select className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl px-4 py-3 outline-none focus:border-[#f59e0b] w-full" value={formData.status} onChange={e=>setFormData({...formData, status: e.target.value})}>
                 <option value="active">Activa</option>
                 <option value="finished">Finalizada</option>
              </select>
           </div>
           {formData.status === 'finished' && (
-            <div className="grid grid-cols-2 gap-4 p-4 bg-[#222] rounded-xl border border-gray-700 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#222] rounded-xl border border-gray-700 mt-4">
                <Input label="NOMBRE GANADOR" value={formData.winnerName} onChange={e=>setFormData({...formData, winnerName: e.target.value})} />
                <Input label="BOLETO GANADOR" value={formData.winningNumber} onChange={e=>setFormData({...formData, winningNumber: e.target.value})} />
             </div>
           )}
-          <Button type="submit" className="w-full mt-6 py-4">GUARDAR DATOS</Button>
+          <Button type="submit" className="w-full mt-4 sm:mt-6 py-3 sm:py-4 text-sm sm:text-base">GUARDAR DATOS</Button>
         </form>
       </Modal>
     </div>
@@ -929,60 +956,61 @@ const AdminPurchases = ({ purchases }) => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold tracking-widest text-white uppercase">Validación de Pagos</h2>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-widest text-white uppercase">Validación de Pagos</h2>
       </div>
 
-      <Card className="p-3 mb-6 bg-[#111] border-gray-800">
-         <div className="flex items-center gap-3 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3">
-            <Search className="text-gray-500" size={20} />
-            <input type="text" placeholder="Buscar por nombre, boleto o teléfono..." className="bg-transparent border-none outline-none w-full text-white placeholder-gray-600" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+      <Card className="p-2 sm:p-3 mb-4 sm:mb-6 bg-[#111] border-gray-800">
+         <div className="flex items-center gap-2 sm:gap-3 bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 sm:px-4 py-2 sm:py-3">
+            <Search className="text-gray-500" size={18} />
+            <input type="text" placeholder="Buscar por nombre, boleto o teléfono..." className="bg-transparent border-none outline-none w-full text-white placeholder-gray-600 text-sm sm:text-base" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
          </div>
       </Card>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {filtered.map(p => (
           <Card key={p.id} className="p-0 overflow-hidden flex flex-col md:flex-row border-gray-800 bg-[#111]">
-             <div className="w-full md:w-56 h-56 bg-[#1a1a1a] flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-800 relative group cursor-pointer" onClick={() => window.open(p.proofUrl, '_blank')}>
+             <div className="w-full md:w-56 h-48 md:h-auto bg-[#1a1a1a] flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-800 relative group cursor-pointer" onClick={() => window.open(p.proofUrl, '_blank')}>
                 {p.proofUrl ? <img src={p.proofUrl} alt="Comprobante" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" /> : <span className="text-xs text-gray-600">SIN FOTO</span>}
-                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-sm font-bold tracking-widest backdrop-blur-sm">VER COMPROBANTE</div>
+                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs sm:text-sm font-bold tracking-widest backdrop-blur-sm">VER COMPROBANTE</div>
              </div>
-             <div className="p-6 flex-1 flex flex-col justify-between">
+             <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
                 <div>
                    <div className="flex justify-between items-start mb-3">
-                     <h3 className="font-bold text-xl text-white uppercase">{p.user.name}</h3>
-                     <span className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${p.status === 'APPROVED' ? 'bg-green-900/50 text-green-500' : p.status === 'REJECTED' ? 'bg-red-900/50 text-red-500' : 'bg-[#f59e0b]/20 text-[#f59e0b]'}`}>
+                     <h3 className="font-bold text-lg sm:text-xl text-white uppercase">{p.user.name}</h3>
+                     <span className={`px-2 sm:px-3 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-widest shrink-0 ml-2 ${p.status === 'APPROVED' ? 'bg-green-900/50 text-green-500' : p.status === 'REJECTED' ? 'bg-red-900/50 text-red-500' : 'bg-[#f59e0b]/20 text-[#f59e0b]'}`}>
                        {p.status}
                      </span>
                    </div>
-                   <div className="text-sm text-gray-400 space-y-2 font-light">
-                      <p className="flex items-center gap-2"><span className="w-4">📧</span> {p.user.email} &nbsp;|&nbsp; 📱 {p.user.phone}</p>
-                      <p className="flex items-center gap-2"><span className="w-4">🎟</span> <span className="font-medium text-white">{p.raffleTitle}</span></p>
+                   <div className="text-xs sm:text-sm text-gray-400 space-y-1.5 sm:space-y-2 font-light">
+                      <p className="flex items-center gap-2"><span className="w-4 text-center">📧</span> {p.user.email}</p>
+                      <p className="flex items-center gap-2"><span className="w-4 text-center">📱</span> {p.user.phone}</p>
+                      <p className="flex items-center gap-2"><span className="w-4 text-center">🎟</span> <span className="font-medium text-white">{p.raffleTitle}</span></p>
                       <div className="flex gap-2 items-center pt-2">
-                        <span className="text-xs uppercase tracking-widest font-bold">Números:</span>
+                        <span className="text-[10px] sm:text-xs uppercase tracking-widest font-bold shrink-0">Números:</span>
                         <div className="flex flex-wrap gap-1">
-                          {p.tickets.map(t => <span key={t} className="bg-[#222] border border-gray-700 text-white px-2 py-0.5 rounded text-xs font-bold">{t}</span>)}
+                          {p.tickets.map(t => <span key={t} className="bg-[#222] border border-gray-700 text-white px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold">{t}</span>)}
                         </div>
                       </div>
-                      <p className="font-extrabold text-[#f59e0b] mt-4 text-2xl pt-2 border-t border-gray-800">{formatCurrency(p.total)}</p>
+                      <p className="font-extrabold text-[#f59e0b] mt-3 sm:mt-4 text-xl sm:text-2xl pt-2 border-t border-gray-800">{formatCurrency(p.total)}</p>
                    </div>
                 </div>
                 {p.status === 'PENDING' && (
-                  <div className="flex gap-4 mt-6">
-                    <Button onClick={() => updateStatus(p.id, 'APPROVED', p.user.email)} className="bg-green-600 text-white hover:bg-green-500 flex-1 py-3 text-xs">APROBAR</Button>
-                    <Button onClick={() => updateStatus(p.id, 'REJECTED', p.user.email)} variant="danger" className="flex-1 py-3 text-xs">RECHAZAR</Button>
+                  <div className="flex gap-3 sm:gap-4 mt-5 sm:mt-6">
+                    <Button onClick={() => updateStatus(p.id, 'APPROVED', p.user.email)} className="bg-green-600 text-white hover:bg-green-500 flex-1 py-2.5 sm:py-3 text-[10px] sm:text-xs">APROBAR</Button>
+                    <Button onClick={() => updateStatus(p.id, 'REJECTED', p.user.email)} variant="danger" className="flex-1 py-2.5 sm:py-3 text-[10px] sm:text-xs">RECHAZAR</Button>
                   </div>
                 )}
                 {p.status !== 'PENDING' && (
-                  <div className="mt-6 flex justify-end">
-                     <Button variant="secondary" className="!py-2 text-[10px]" onClick={() => updateStatus(p.id, 'PENDING', p.user.email)}>DESHACER ACCIÓN</Button>
+                  <div className="mt-5 sm:mt-6 flex justify-end">
+                     <Button variant="secondary" className="!py-1.5 sm:!py-2 text-[9px] sm:text-[10px] w-full sm:w-auto" onClick={() => updateStatus(p.id, 'PENDING', p.user.email)}>DESHACER ACCIÓN</Button>
                   </div>
                 )}
              </div>
           </Card>
         ))}
-        {filtered.length === 0 && <div className="text-center py-20 text-gray-600 font-bold tracking-widest uppercase">No hay registros</div>}
+        {filtered.length === 0 && <div className="text-center py-16 sm:py-20 text-gray-600 font-bold tracking-widest uppercase text-sm sm:text-base">No hay registros</div>}
       </div>
     </div>
   );
@@ -995,21 +1023,21 @@ const AdminConfig = ({ config }) => {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-2xl font-bold tracking-widest text-white uppercase mb-8">Configuración</h2>
-      <Card className="p-8 bg-[#111] border-gray-800">
-        <form onSubmit={handleSave} className="space-y-6">
-           <div className="grid grid-cols-2 gap-6">
+      <h2 className="text-xl sm:text-2xl font-bold tracking-widest text-white uppercase mb-6 sm:mb-8">Configuración</h2>
+      <Card className="p-5 sm:p-8 bg-[#111] border-gray-800">
+        <form onSubmit={handleSave} className="space-y-4 sm:space-y-6">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
              <Input label="NOMBRE DEL NEGOCIO" value={formData.businessName} onChange={e=>setFormData({...formData, businessName: e.target.value})} />
              <Input label="INICIALES LOGO" value={formData.logoText} onChange={e=>setFormData({...formData, logoText: e.target.value})} />
            </div>
-           <div className="grid grid-cols-2 gap-6">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
              <Input label="TELÉFONO" value={formData.contactPhone} onChange={e=>setFormData({...formData, contactPhone: e.target.value})} />
              <Input label="CORREO" value={formData.contactEmail} onChange={e=>setFormData({...formData, contactEmail: e.target.value})} />
            </div>
            <Input label="DATOS PARA TRANSFERENCIA" multiline value={formData.bankDetails} onChange={e=>setFormData({...formData, bankDetails: e.target.value})} />
            <Input label="TEXTO PROMOCIÓN (EJ. COMPRA 10 LLEVA 1)" value={formData.promoText} onChange={e=>setFormData({...formData, promoText: e.target.value})} />
            <Input label="MENSAJE DE ÉXITO" multiline value={formData.successMessage} onChange={e=>setFormData({...formData, successMessage: e.target.value})} />
-           <Button type="submit" className="w-full mt-8 py-4" disabled={saving}>{saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}</Button>
+           <Button type="submit" className="w-full mt-6 sm:mt-8 py-3 sm:py-4 text-sm sm:text-base" disabled={saving}>{saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}</Button>
         </form>
       </Card>
     </div>
@@ -1018,6 +1046,8 @@ const AdminConfig = ({ config }) => {
 
 const AdminLayout = ({ children, navigate }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const tabs = [
     { id: 'dashboard', label: 'DASHBOARD', icon: BarChart3 },
     { id: 'raffles', label: 'DINÁMICAS', icon: Ticket },
@@ -1025,29 +1055,51 @@ const AdminLayout = ({ children, navigate }) => {
     { id: 'config', label: 'AJUSTES', icon: Settings },
   ];
 
+  const handleTabClick = (id) => {
+    setActiveTab(id);
+    setIsSidebarOpen(false); // Cierra el menú en móvil al hacer clic
+  };
+
   return (
-    <div className="min-h-screen bg-[#050505] flex text-white font-sans selection:bg-[#f59e0b]/30">
-       <div className="w-72 bg-[#0a0a0a] border-r border-gray-900 flex flex-col fixed inset-y-0 z-10 shadow-2xl">
-          <div className="h-24 flex items-center justify-center px-6 border-b border-gray-900">
-             <span className="font-extrabold text-xl tracking-widest text-white flex items-center gap-2"><ShieldCheck className="text-[#f59e0b]"/> CONTROL</span>
+    <div className="min-h-screen bg-[#050505] flex flex-col md:flex-row text-white font-sans selection:bg-[#f59e0b]/30">
+       
+       {/* Mobile Top Navbar */}
+       <div className="md:hidden h-16 bg-[#0a0a0a] border-b border-gray-900 flex items-center justify-between px-4 sticky top-0 z-20">
+          <span className="font-extrabold tracking-widest flex items-center gap-2 text-sm"><ShieldCheck className="text-[#f59e0b]"/> CONTROL ADMIN</span>
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white p-2">
+            {isSidebarOpen ? <X size={24}/> : <Menu size={24}/>}
+          </button>
+       </div>
+
+       {/* Overlay for mobile sidebar */}
+       {isSidebarOpen && (
+         <div className="md:hidden fixed inset-0 bg-black/80 z-30" onClick={() => setIsSidebarOpen(false)} />
+       )}
+
+       {/* Sidebar */}
+       <div className={`w-64 sm:w-72 bg-[#0a0a0a] border-r border-gray-900 flex flex-col fixed inset-y-0 left-0 z-40 shadow-2xl transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="h-20 sm:h-24 flex items-center justify-center px-6 border-b border-gray-900">
+             <span className="font-extrabold text-lg sm:text-xl tracking-widest text-white flex items-center gap-2"><ShieldCheck className="text-[#f59e0b]"/> CONTROL</span>
           </div>
-          <div className="flex-1 py-8 px-4 space-y-3">
+          <div className="flex-1 py-6 sm:py-8 px-3 sm:px-4 space-y-2 sm:space-y-3 overflow-y-auto">
              {tabs.map(t => (
-               <button key={t.id} onClick={() => setActiveTab(t.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl transition-all font-bold tracking-widest text-xs uppercase ${activeTab === t.id ? 'bg-[#f59e0b] text-black shadow-lg shadow-amber-900/20' : 'text-gray-500 hover:bg-[#111] hover:text-white'}`}>
-                 <t.icon size={18} /> {t.label}
+               <button key={t.id} onClick={() => handleTabClick(t.id)} className={`w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 rounded-xl transition-all font-bold tracking-widest text-[10px] sm:text-xs uppercase ${activeTab === t.id ? 'bg-[#f59e0b] text-black shadow-lg shadow-amber-900/20' : 'text-gray-500 hover:bg-[#111] hover:text-white'}`}>
+                 <t.icon size={18} className="shrink-0" /> {t.label}
                </button>
              ))}
           </div>
-          <div className="p-6 border-t border-gray-900">
-             <button onClick={() => navigate('home')} className="w-full flex items-center justify-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-[#111] rounded-xl text-xs font-bold uppercase tracking-widest transition-colors mb-2">
+          <div className="p-4 sm:p-6 border-t border-gray-900 shrink-0">
+             <button onClick={() => navigate('home')} className="w-full flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-gray-500 hover:text-white hover:bg-[#111] rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors mb-2">
                <Home size={16} /> VOLVER A LA WEB
              </button>
-             <button onClick={() => { signOut(auth); navigate('home'); }} className="w-full flex items-center justify-center gap-3 px-4 py-3 text-red-500 hover:bg-red-950/30 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors">
+             <button onClick={() => { signOut(auth); navigate('home'); }} className="w-full flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-red-500 hover:bg-red-950/30 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors">
                <LogIn size={16} className="rotate-180" /> SALIR
              </button>
           </div>
        </div>
-       <div className="flex-1 ml-72 p-12 overflow-y-auto">
+
+       {/* Main Content Area */}
+       <div className="flex-1 md:ml-72 p-4 sm:p-8 md:p-12 overflow-y-auto w-full">
           <div className="max-w-6xl mx-auto">
              {children({ activeTab })}
           </div>
@@ -1067,7 +1119,7 @@ export default function App() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-12 h-12 border-4 border-[#222] border-t-[#f59e0b] rounded-full" />
+       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-[#222] border-t-[#f59e0b] rounded-full" />
     </div>
   );
 
@@ -1100,16 +1152,16 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-[#f59e0b]/30">
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-[#f59e0b]/30 flex flex-col">
       {isClientRoute && <Header config={config} navigate={navigate} currentRoute={route.path} isAdmin={isAdmin} />}
       <AnimatePresence mode="wait">
-        <motion.main key={route.path + (route.params.id || '')} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.4 }} className={isClientRoute ? "" : "h-full"}>
+        <motion.main key={route.path + (route.params.id || '')} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.4 }} className={`flex-1 ${!isClientRoute ? 'h-full' : ''}`}>
           {View}
         </motion.main>
       </AnimatePresence>
       {isClientRoute && (
-        <footer className="bg-[#111] border-t border-gray-900 py-10 text-center text-gray-600 text-xs font-bold tracking-widest uppercase mt-auto">
-          <p>&copy; {new Date().getFullYear()} {config.businessName}. TODOS LOS DERECHOS RESERVADOS.</p>
+        <footer className="bg-[#111] border-t border-gray-900 py-8 sm:py-10 text-center text-gray-600 text-[10px] sm:text-xs font-bold tracking-widest uppercase shrink-0">
+          <p className="px-4">&copy; {new Date().getFullYear()} {config.businessName}. TODOS LOS DERECHOS RESERVADOS.</p>
         </footer>
       )}
     </div>
