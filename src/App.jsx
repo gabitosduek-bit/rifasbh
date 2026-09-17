@@ -460,7 +460,7 @@ const RaffleDetailView = ({ raffleId, raffles, purchases, config, navigate }) =>
           proofUrl = await getDownloadURL(storageRef);
         } catch (uploadError) {
           console.warn("Storage upload failed, fallback", uploadError);
-          proofUrl = ;
+          proofUrl = "" ;
         }
       }
 
